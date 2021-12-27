@@ -77,13 +77,13 @@ struct
           in
           Lwt.return (ev, handler_ctx)
         | Error err ->
-          Logs_lwt.err (fun m -> m "Could not parse event to type: %s" err)
+          Logs_lwt.err (fun m -> m "Could not parse event to type: %s body: %s" err ev_data)
           >>= fun () ->
           let error =
             Errors.make_runtime_error
               ~recoverable:true
               ~request_id:invocation_ctx.aws_request_id
-              (Printf.sprintf "Could not unserialize from JSON: %s" err)
+              (Printf.sprintf "Could not deserialize from JSON: %s, body: %s" err ev_data)
           in
           get_next_event ~error runtime (retries + 1)
         | exception _ ->
@@ -91,7 +91,7 @@ struct
             Errors.make_runtime_error
               ~recoverable:false
               ~request_id:invocation_ctx.aws_request_id
-              (Printf.sprintf "Could not parse event to type: %s" ev_data)
+              (Printf.sprintf "Could not parse event to type: body: %s" ev_data)
           in
           get_next_event ~error runtime (retries + 1))
       | Error e ->
